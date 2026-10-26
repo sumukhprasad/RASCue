@@ -1,0 +1,69 @@
+@use "forms.sass"
+
+*
+	font-family: Lucida Grande, Lucida Sans Unicode, Helvetica Neue, Helvetica, sans-serif
+
+body
+	padding: 0
+	margin: 0
+	font-size: 12px
+
+main
+	width: 100vw
+	max-width: 900px
+	padding: 20px
+	margin: auto
+	
+a
+	color: #00AF99
+	text-decoration: none
+	text-decoration-color: #00AF99
+	-webkit-text-decoration-color: #00AF99
+	text-decoration-thickness: 2px
+	text-underline-offset: 1px
+	transition: all 0.2s
+	&:hover
+		text-decoration: underline
+		
+.center
+	margin-top: 60px
+	margin-right: auto
+	margin-left: auto
+	width: 240px
+	
+	img
+		height: 35px
+		
+
+table
+	border-collapse: collapse
+	
+	th, td
+		padding: 3px 5px
+		
+	th
+		background-color: #aaa
+		text-align: left
+		color: white
+		font-weight: bold
+	
+	td
+		border-bottom: 1px dashed #aaa
+		
+code
+	font-family: menlo, monaco, monospace
+	
+.status
+	display: inline-block
+	color: white
+	background-color: #aaa
+	border-radius: 12px
+	padding: 1px 3px
+	font-weight: bold
+	text-transform: uppercase
+	
+.boxed
+	padding: 10px
+	border: 2px solid white
+	background-image: linear-gradient(#eee, #fff)
+	box-shadow: 0px 2px 2px rgba(0,0,0,0.5)
