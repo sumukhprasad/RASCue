@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="x-ua-compatible" content="ie=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	
+	<title>RASCue Authentication</title>
+
+	<%= erb :"_includes/head" %>
+</head>
+
+<body>
+	<main>
+		<h1>RASCue Authentication</h1>
+
+		<section>
+			<h2>Credentials</h2>
+
+			<p>
+				<label for="device-id">Device ID</label><br>
+				<input
+					type="text"
+					id="device-id"
+					placeholder="device_a1b2c3d4"
+					autocomplete="username"
+					required
+				>
+			</p>
+
+			<p>
+				<label for="device-token">Device token</label><br>
+				<input
+					type="password"
+					id="device-token"
+					placeholder="enter your device token"
+					autocomplete="current-password"
+					required
+				>
+			</p>
+			
+			<button id="check">check and save ></button>
+		</section>
+
+		<script>
+			const deviceIdInput = document.getElementById("device-id");
+			const tokenInput = document.getElementById("device-token");
+			const checkButton = document.getElementById("check");
+
+			async function check() {
+				deviceIdInput.disabled = true;
+				tokenInput.disabled = true;
+				checkButton.disabled = true;
+
+				try {
+					const response = await fetch("/api/auth/check", {
+						method: "POST",
+						credentials: "same-origin",
+						headers: {
+							"X-Device-ID": deviceIdInput.value.trim(),
+							"Authorization": `Bearer ${tokenInput.value.trim()}`
+						}
+					});
+
+					const data = await response.json();
+
+					if (!response.ok || !data.ok) {
+						throw new Error("Invalid credentials");
+					}
+
+					window.location.assign("/");
+				} catch (error) {
+					alert(error.message || "Unable to authenticate. Try again.");
+
+					deviceIdInput.disabled = false;
+					tokenInput.disabled = false;
+					checkButton.disabled = false;
+				}
+			}
+
+			checkButton.onclick = check;
+		</script>
+	</main>
+
+</body>
+</html>
