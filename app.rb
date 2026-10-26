@@ -1,4 +1,7 @@
 require "sinatra/base"
+require_relative "script-manifest"
+
+SCRIPTS = generate_script_manifest.freeze
 
 class RASCue < Sinatra::Base
 	set :views, File.expand_path("views", __dir__)

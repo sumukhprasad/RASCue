@@ -1,5 +1,5 @@
 require_relative "app"
 
 
-puts "GANDALF!"
-run Gandalf
+puts "RASCue!"
+run RASCue

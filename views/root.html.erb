@@ -14,8 +14,38 @@
 	<main>
 		<h1>RASCue Remote AppleScript Trigger Page</h1>
 		
+		<ul>
+			<% @scripts.each do |s| %>
+				<li><button onclick="trigger('<%= s %>')"><%= s %></button></li>
+			<% end %>
+		</ul>
 		
-		hello, world!
+
+		  <p id="status" role="status" aria-live="polite"></p>
+
+		  <script>
+		    async function trigger(action) {
+		      const status = document.getElementById("status");
+		      status.textContent = "sending...";
+
+		      try {
+		        const response = await fetch(`/api/actions/${action}`, {
+		          method: "POST",
+		          credentials: "same-origin"
+		        });
+
+		        const result = await response.json();
+
+		        if (!response.ok) {
+		          throw new Error(result.error || "request failed");
+		        }
+
+		        status.textContent = `! ${action} triggered`;
+		      } catch (error) {
+		        status.textContent = `! ${error.message}`;
+		      }
+		    }
+		  </script>
 		
 	</main>
 
