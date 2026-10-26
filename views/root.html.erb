@@ -4,8 +4,64 @@
 	<meta charset="utf-8">
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	
+
 	<title>RASCue Remote AppleScript Trigger Page</title>
+
+	<style>
+		.biggest-button {
+			padding: 15px 20px !important;
+			border-radius: 4px !important;
+			font-size: 36px !important;
+		}
+
+		.big-button {
+			padding: 10px 10px !important;
+			border-radius: 4px !important;
+			font-size: 24px !important;
+		}
+
+		#workspace {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: flex-start;
+			gap: 12px;
+			margin: 20px 0;
+		}
+
+		.workspace-item {
+			padding: 4px;
+			border: 1px dashed #000;
+		}
+
+		.cue-button {
+			cursor: pointer;
+		}
+
+		.cue-button:disabled {
+			cursor: wait;
+			opacity: 0.6;
+		}
+
+		.remove-button {
+			display: block;
+			cursor: pointer;
+			padding: 4px 8px;
+		}
+
+		#cue-title,
+		#cue-action {
+			box-sizing: border-box;
+			width: 100%;
+			max-width: 400px;
+			padding: 10px;
+			font-size: 16px;
+		}
+
+		#cue-status {
+			min-height: 1.5em;
+			margin-top: 12px;
+		}
+	</style>
 
 	<%= erb :"_includes/head" %>
 </head>
@@ -13,7 +69,197 @@
 <body>
 	<main>
 		<h1>RASCue Remote AppleScript Trigger Page</h1>
+		
+
+		<form action="/logout" method="POST">
+			<button type="submit">Logout</button>
+		</form>
+
+		<div class="boxed">
+			<h1>Workspace</h1>
+
+			<div id="workspace">
+				<i id="empty-message">Workspace is empty...</i>
+			</div>
+
+			<p id="cue-status" role="status" aria-live="polite"></p>
+		</div>
+		
+		<div class="boxed" style="margin-top: 50px">
+			<form id="add-cue-form">
+				<h2>Add a button</h2>
+
+				<label for="cue-title">Button title: </label>
+				<input
+					type="text"
+					id="cue-title"
+					name="title"
+					placeholder="e.g. play intro"
+					maxlength="80"
+					required
+				>
+
+				<label for="cue-action">Action to trigger: </label>
+				<select id="cue-action" name="action" required>
+					<% @scripts.each do |script| %>
+						<option value="<%= script %>"><%= script %></option>
+					<% end %>
+				</select>
+
+				<label>Size:</label>
+				<div class="size-options">
+					<label>
+						<input type="radio" name="size" value="normal" checked>
+						normal
+					</label><br>
+
+					<label>
+						<input type="radio" name="size" value="big">
+						big
+					</label><br>
+
+					<label>
+						<input type="radio" name="size" value="biggest">
+						biggest
+					</label>
+				</div>
+
+				<p>
+					<button type="submit">＋ add to workspace</button>
+				</p>
+			</form>
+		</div>
 	</main>
 
+	<script>
+		const workspace = document.getElementById("workspace");
+		const form = document.getElementById("add-cue-form");
+		const statusMessage = document.getElementById("cue-status");
+		
+		const availableActions = new Set(
+			Array.from(
+				document.getElementById("cue-action").options,
+				option => option.value
+			)
+		);
+
+		function updateEmptyMessage() {
+			const hasButtons = workspace.querySelector(".workspace-item");
+
+			let message = document.getElementById("empty-message");
+
+			if (!hasButtons && !message) {
+				message = document.createElement("i");
+				message.id = "empty-message";
+				message.textContent = "Workspace is empty...";
+				workspace.appendChild(message);
+			} else if (hasButtons && message) {
+				message.remove();
+			}
+		}
+
+		async function triggerAction(action, button) {
+			if (!availableActions.has(action)) {
+				statusMessage.textContent = "That action is not available.";
+				return;
+			}
+
+			button.disabled = true;
+			statusMessage.textContent = "Triggering " + action + "...";
+
+			try {
+				const response = await fetch(
+					"/api/actions/" + encodeURIComponent(action),
+					{
+						method: "POST",
+						credentials: "same-origin"
+					}
+				);
+
+				const data = await response.json();
+
+				if (response.status === 401) {
+					window.location.assign("/login");
+					return;
+				}
+
+				if (!response.ok || !data.ok) {
+					throw new Error(data.error || "The action failed.");
+				}
+
+				statusMessage.textContent = "Triggered: " + action;
+			} catch (error) {
+				statusMessage.textContent = "Could not trigger action: " + error.message;
+			} finally {
+				button.disabled = false;
+			}
+		}
+
+		function addCue(title, action, size) {
+			const item = document.createElement("div");
+			item.className = "workspace-item";
+
+			const button = document.createElement("button");
+			button.type = "button";
+			button.className = "cue-button";
+
+			if (size === "big") {
+				button.classList.add("big-button");
+			} else if (size === "biggest") {
+				button.classList.add("biggest-button");
+			}
+
+			button.textContent = title;
+			button.title = "Trigger action: " + action;
+
+			button.addEventListener("click", () => {
+				triggerAction(action, button);
+			});
+
+			const removeButton = document.createElement("button");
+			removeButton.type = "button";
+			removeButton.className = "remove-button";
+			removeButton.textContent = "remove";
+			removeButton.title = "Remove " + title;
+			removeButton.setAttribute("aria-label", "Remove " + title);
+
+			removeButton.addEventListener("click", () => {
+				item.remove();
+				updateEmptyMessage();
+				statusMessage.textContent = "Removed button: " + title;
+			});
+
+			item.appendChild(button);
+			item.appendChild(removeButton);
+			workspace.appendChild(item);
+
+			updateEmptyMessage();
+		}
+
+		form.addEventListener("submit", event => {
+			event.preventDefault();
+
+			const title = document.getElementById("cue-title").value.trim();
+			const action = document.getElementById("cue-action").value;
+			const size = form.querySelector('input[name="size"]:checked').value;
+
+			if (!title) {
+				statusMessage.textContent = "Please enter a button title.";
+				return;
+			}
+
+			if (!availableActions.has(action)) {
+				statusMessage.textContent = "Please select a valid action.";
+				return;
+			}
+
+			addCue(title, action, size);
+
+			statusMessage.textContent = "Added button: " + title;
+
+			form.reset();
+			document.getElementById("cue-title").focus();
+		});
+	</script>
 </body>
 </html>

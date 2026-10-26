@@ -36,6 +36,11 @@ configure_routes do
 
 		erb :login
 	end
+	
+	post "/logout" do
+		session.clear
+		redirect "/login"
+	end
 
 	post "/api/auth/check" do
 		device_id = request.env["HTTP_X_DEVICE_ID"].to_s
